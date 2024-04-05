@@ -5,7 +5,11 @@ import {
   getToken,
   updateOrCreateUser
 } from '../service/kakaoAuth.service';
-import { getNaverToken, getNaverUser } from '../service/naverAuth.service';
+import {
+  getNaverToken,
+  getNaverUser,
+  updateOrCreateNaverUser
+} from '../service/naverAuth.service';
 import { userService } from '../service/user.service';
 import { auth, db } from '../utils/firebase';
 
@@ -66,11 +70,33 @@ oauthRouter.get('/naver', async (req, res) => {
       });
     }
     const response = await getNaverToken(code); // 네이버 OAuth를 통해 액세스 토큰을 받아옴
-    const naverUser = await getNaverUser(response.data.access_token); // 액세스 토큰을 사용하여 네이버 사용자 정보를 가져옴
-    // 이후에 필요한 처리를 수행하고 클라이언트에게 응답을 보냄
-    return res
-      .status(200)
-      .json({ message: '네이버 로그인 성공', user: naverUser });
+    const naverUser = await getNaverUser(response.access_token); // 액세스 토큰을 사용하여 네이버 사용자 정보를 가져옴
+
+    // 네이버 사용자 정보를 바탕으로 Firebase에 인증 및 사용자 정보 업데이트
+    const authUser = await updateOrCreateNaverUser(naverUser.response);
+    const firebaseToken = await auth.createCustomToken(authUser.uid, {
+      provider: 'oidc.naver',
+      httpOnly: true
+    });
+
+    // 사용자 정보가 새로 생성되었을 경우 Firebase와 DB에 사용자 정보 저장
+    if (naverUser.isNewUser) {
+      await userService.userCreate({
+        uid: naverUser.id,
+        name: naverUser.naver_account.profile.nickname,
+        email: naverUser.naver_account.email || '', // 네이버는 이메일 제공 선택적
+        // name, age 등 필요한 정보 추가
+        question: [],
+        messageCount: 0,
+        refreshToken: response.refresh_token
+      });
+    }
+
+    // Firebase에서 발급된 사용자 토큰을 쿠키에 담아서 클라이언트에게 전달
+    res.cookie('firebaseToken', firebaseToken, { httpOnly: true });
+
+    // 프론트 router 작성되면 redirect 위치 분기문 작성 예정
+    return res.redirect(frontendUrl);
   } catch (error) {
     res.status(404).json({ message: '네이버 로그인에 실패하였습니다.' });
     throw new Error(error);
