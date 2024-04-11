@@ -4,9 +4,11 @@
   "main": "index.js",
   "repository": "https://kdt-gitlab.elice.io/sw_track/class_08/web_project_ii/team02",
   "scripts": {
-    "dev": "nodemon --exec babel-node ./src/app.js --delay 2",
+    "dev": "nodemon --exec babel-node ./src/app.js",
     "build": "babel src -d dist",
-    "start": "node ./dist/app.js"
+    "start": "node ./dist/app.js",
+    "deploy": "pm2 start ecosystem.config.js",
+    "test": "node --test -r @babel/register"
   },
   "license": "MIT",
   "dependencies": {
@@ -14,19 +16,26 @@
     "@babel/node": "^7.23.9",
     "axios": "^1.6.8",
     "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
     "core-js": "3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "env-var": "^7.4.1",
     "express": "^4.19.2",
-    "firebase-admin": "^12.0.0"
+    "firebase-admin": "^12.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "uuid4": "^2.0.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.24.1",
     "@babel/preset-env": "^7.24.3",
+    "babel-plugin-add-module-exports": "^1.0.4",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "supertest": "^6.3.4"
   }
 }
