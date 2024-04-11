@@ -7,5 +7,9 @@
         "corejs": 3
       }
     ]
+  ],
+  "plugins": [
+    "@babel/plugin-transform-modules-commonjs",
+    ["add-module-exports", { "addDefaultProperty": true }]
   ]
 }
