@@ -1,8 +1,24 @@
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
 import assert from 'node:assert';
-import { describe, it } from 'node:test';
+import { before, describe, it } from 'node:test';
 import request from 'supertest';
-import app from '../src/app';
+import { port } from '../src/constant/env';
+import { router } from '../src/controllers';
 
+const app = express();
+before(() => {
+  app.use(express.json());
+  app.use(cors());
+  app.use(cookieParser());
+  app.use(express.urlencoded({ extended: true }));
+  app.use('/api', router);
+
+  app.listen(port, () => {
+    console.log('Server Running✔️');
+  });
+});
 // 가짜 사용자 데이터 (테스트를 위해 실제 데이터 대신 사용)
 const testUser = {
   uid: process.env.KAKAO_UID
@@ -17,16 +33,10 @@ const testQuestions = [
 
 describe('Tree API 테스트', () => {
   it('이상한 쿠키가 없을 때 처리해야 함', async () => {
-    const res = await request(app)
-      .post('/api/tree/add')
-      .set(
-        'Cookie',
-        'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJrYWthbzozNDE3NzE1MzI2IiwiaWF0IjoxNzEyODA1MTIyLCJleHAiOjE3MTI4OTE1MjJ9.dasdasdasdas'
-      )
-      .send(testQuestions);
+    const res = await request(app).post('/api/tree/add').send(testQuestions);
 
-    assert.strictEqual(res.statusCode, 500);
-    assert.strictEqual(res.body.message, '토큰 에러');
+    assert.strictEqual(res.statusCode, 401);
+    assert.strictEqual(res.body.message, 'Authorization token is missing.');
   });
   // 개인당 트리 1개
   // it('트리와 질문을 생성', async () => {
@@ -48,7 +58,7 @@ describe('Tree API 테스트', () => {
       .post('/api/tree/add')
       .set(
         'Cookie',
-        'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJrYWthbzozNDE3NzE1MzI2IiwiaWF0IjoxNzEyODA1MTIyLCJleHAiOjE3MTI4OTE1MjJ9.QGCbxX2mR4WPJSM3iaQhIaxPmSaxZVKCE7lzl8w1ucE'
+        'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJrYWthbzozNDE3NzE1MzI2IiwiaWF0IjoxNzEyODMzOTUzLCJleHAiOjE3MTI5MjAzNTN9.fcSN9qbvjkpbQNvlS4KSjqmmMiXAz92TxfE1LGnWPvU'
       )
       .send(testQuestions);
 
@@ -62,7 +72,7 @@ describe('Tree API 테스트', () => {
       .post('/api/tree/add')
       .set(
         'Cookie',
-        'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJrYWthbzozNDE3NzE1MzI2IiwiaWF0IjoxNzEyODA1MTIyLCJleHAiOjE3MTI4OTE1MjJ9.QGCbxX2mR4WPJSM3iaQhIaxPmSaxZVKCE7lzl8w1ucE'
+        'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJrYWthbzozNDE3NzE1MzI2IiwiaWF0IjoxNzEyODMzOTUzLCJleHAiOjE3MTI5MjAzNTN9.fcSN9qbvjkpbQNvlS4KSjqmmMiXAz92TxfE1LGnWPvU'
       );
 
     assert.strictEqual(res.statusCode, 403);

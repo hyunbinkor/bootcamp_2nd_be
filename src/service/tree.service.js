@@ -53,4 +53,45 @@ export default class TreeService {
       throw new Error(error);
     }
   }
+
+  // Tree 작성한 유저에 대한 정보
+  async infoQuestion(treeId) {
+    try {
+      const questionInfo = await db
+        .collection('tree')
+        .where('treeId', '==', treeId)
+        .get();
+      if (questionInfo.empty) {
+        return {
+          message: '트리가 없습니다.'
+        };
+      }
+      const { nickName, animal } = questionInfo.docs[0].data().questions;
+      return { nickName, animal };
+    } catch (error) {
+      console.error('유저 정보가 없습니다.', error);
+      throw new Error(error);
+    }
+  }
+
+  async treeIdCheck(treeId) {
+    try {
+      const questionInfo = await db
+        .collection('tree')
+        .where('treeId', '==', treeId)
+        .get();
+
+      if (questionInfo.empty) {
+        return {
+          message: '트리가 없습니다.'
+        };
+      }
+      const { uid } = questionInfo.docs[0].data();
+      console.log(uid);
+      return uid;
+    } catch (error) {
+      console.error('트리가 없습니다.', error);
+      throw new Error(error);
+    }
+  }
 }

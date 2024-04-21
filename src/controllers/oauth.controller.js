@@ -2,12 +2,9 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { jwtSecretKey } from '../constant/env';
 import verifyAuthToken from '../middleware/oauth.middleware';
-import OAuthService from '../service/oauth.service';
+import { authKakao, authNaver } from '../service';
 
 export const oauthRouter = Router();
-
-const authKakao = new OAuthService('kakao');
-const authNaver = new OAuthService('naver');
 
 oauthRouter.get('/kakao', async (req, res) => {
   try {

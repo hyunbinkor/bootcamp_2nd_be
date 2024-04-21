@@ -1,24 +1,29 @@
 import { Router } from 'express';
 import verifyAuthToken from '../middleware/oauth.middleware';
-import MessageService from '../service/message.service';
+import { messageService, treeService } from '../service';
 
 export const messageRouter = Router();
-const messageService = new MessageService();
-// 메시지 1개 받아오기 O
-messageRouter.get('/:messageId', async (req, res) => {
-  try {
-    const { messageId } = req.params;
-    const messageData = await messageService.findOne(messageId);
-    if (messageData.error) {
-      return res.status(404).json({ error: messageData.error });
-    }
+// // 메시지 1개 받아오기 O
+// messageRouter.get('/:messageId', verifyAuthToken, async (req, res) => {
+//   try {
+//     const treeUid = await treeService.treeIdCheck();
+//     const { uid } = req.user;
+//     console.log(treeUid);
+//     if (treeUid === uid) {
+//       res.status(401).json({ message: 'Tree Host가 아닙니다.' });
+//     }
+//     const { messageId } = req.params;
+//     const messageData = await messageService.findOne(messageId);
+//     if (messageData.error) {
+//       return res.status(404).json({ error: messageData.error });
+//     }
 
-    res.json(messageData);
-  } catch (error) {
-    console.error('메시지 1개 받아오기 에러:', error);
-    res.status(500).send({ error: '메시지를 가져오지 못했습니다.' });
-  }
-});
+//     res.json(messageData);
+//   } catch (error) {
+//     console.error('메시지 1개 받아오기 에러:', error);
+//     res.status(500).send({ error: '메시지를 가져오지 못했습니다.' });
+//   }
+// });
 
 // 메시지 작성 O
 messageRouter.post('/:treeId/write', async (req, res) => {
@@ -86,14 +91,41 @@ messageRouter.get('/icon/all', async (req, res) => {
   }
 });
 
-// 트리 메시지 전체 받아오기 O
-messageRouter.get('/:treeId/all', async (req, res) => {
+// host 트리 메시지 전체 받아오기 O
+messageRouter.get('/:treeId/all', verifyAuthToken, async (req, res) => {
   try {
     const { treeId } = req.params;
-    const { count } = req.query;
-    const messages = await messageService.findAll(treeId, count); // 페이지네이션 11개씩
+    const treeUid = await treeService.treeIdCheck(treeId);
+    const { uid } = req.user;
+    if (treeUid !== uid) {
+      return res.status(401).json({ message: 'Tree Host가 아닙니다.' });
+    }
+    const { count, size } = req.query;
+    const messages = await messageService.findAll(treeId, count, size); // 페이지네이션 11개씩
 
     res.json(messages);
+  } catch (error) {
+    console.error('Error:', error);
+    return res
+      .status(500)
+      .json({ message: '메시지를 가져오지 못했습니다.', error: error.message });
+  }
+});
+
+// Guest 트리 메시지 전체 받아오기 O
+messageRouter.get('/:treeId/guestAll', async (req, res) => {
+  try {
+    const { treeId } = req.params;
+    const { count, size } = req.query;
+    if (!treeId || !count || !size) {
+      res.status(404).json({ message: '몇개의 데이터를 가져올지 입력하세요' });
+    }
+    const messages = await messageService.findAll(treeId, count, size); // 페이지네이션 11개씩
+    const iconsAndCoordinates = messages.map((msg) => ({
+      icon: msg.icon,
+      coordinate: msg.coordinate
+    }));
+    res.json(iconsAndCoordinates);
   } catch (error) {
     console.error('Error:', error);
     return res

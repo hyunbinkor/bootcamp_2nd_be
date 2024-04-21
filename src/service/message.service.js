@@ -1,5 +1,6 @@
 import firebase from 'firebase-admin';
 import { getDownloadURL } from 'firebase-admin/storage';
+import uuid4 from 'uuid4';
 import { db, storage } from '../utils/firebase';
 
 export default class MessageService {
@@ -100,7 +101,8 @@ export default class MessageService {
     const flattenedUrls = iconUrlsArray
       .flat()
       .slice(1)
-      .map((urlArr) => urlArr.toString());
+      .map((urlArr) => ({ key: uuid4, url: urlArr.toString() }));
+
     return flattenedUrls;
   }
 
@@ -108,16 +110,16 @@ export default class MessageService {
    *
    * @param {string} treeId - 트리 고유번호(treeId)
    * @param {number} count - 페이지네이션 count
+   * @param {number} size - 페이지네이션 size 한페이지에 표시할 개수
    * @returns {Promise<{treeId: string, coordinate: {x:number, y:number}, icon: string, created_at: Date, message:string}[]|{error: string}>}
    */
-  async findAll(treeId, count) {
-    const pageSize = 11; // 한 페이지에 표시할 메시지 수
-    const startAfterDoc = (count - 1) * pageSize; // 시작점 계산
+  async findAll(treeId, count, size) {
+    const startAfterDoc = (count - 1) * size; // 시작점 계산
     let query = db
       .collection('messages')
       .where('treeId', '==', treeId)
       .orderBy('created_at', 'desc')
-      .limit(pageSize);
+      .limit(Number(size));
 
     if (count > 1) {
       const lastPageQuery = await db
